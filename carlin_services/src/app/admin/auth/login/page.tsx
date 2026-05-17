@@ -1,18 +1,18 @@
-"use client"
-
 import AuthComponent from "@/components/auth";
 import { db } from "@/db";
 import { admin } from "@/db/schema";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
+import { redirect } from "next/navigation";
 
-export async function LoginPage() {
-    const handleSignIn = async (e: React.SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const email = e.currentTarget.email.value;
-        const password = e.currentTarget.password.value;
+export default async function LoginPage() {
+    const handleSignIn = async (formData: FormData) => {
+        "use server";
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
         const account = await db.select().from(admin).where(eq(admin.email, email));
+
         if (account.length === 0) {
             return {
                 error: "Account does not exist",
@@ -24,10 +24,10 @@ export async function LoginPage() {
                 error: "Invalid password",
             };
         }
-        const token = jwt.sign({ id: account[0].id }, "secret", { expiresIn: "3d" });
-
+        const token = jwt.sign({ id: account[0].id }, process.env.SECRET_CODE!, { expiresIn: "3d" });
+        redirect("/admin");
         return {
-            token: token,
+            token: token
         };
     };
     return (

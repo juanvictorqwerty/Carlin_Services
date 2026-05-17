@@ -5,25 +5,33 @@ import ErrorMessage from "./error";
 
 interface AuthComponentProps {
     componentName: string;
-    onFormSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
+    onFormSubmit: (formData: FormData) => Promise<any>;
 }
 
 export default function AuthComponent({ componentName, onFormSubmit }: AuthComponentProps) {
-    const headerTitle = componentName === "sign_up" ? "Sign Up" : "Sign In";
-    const description = componentName === "sign_up" ? "Create an account" : "Sign in to your acco   unt";
-    const buttonText = componentName === "sign_up" ? "Sign Up" : "Sign In";
+    const isSignUp = componentName === "sign_up";
+    const headerTitle = isSignUp ? "Create Account" : "Welcome Back";
+    const description = isSignUp ? "Join us today" : "Sign in to continue";
+    const buttonText = isSignUp ? "Create Account" : "Sign In";
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [secretCode, setSecretCode] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [focusedField, setFocusedField] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
 
         try {
-            await onFormSubmit(e);
+            const formData = new FormData(e.currentTarget);
+            const result = await onFormSubmit(formData);
+            if (result?.error) {
+                setError(result.error);
+            }
         } catch (error) {
             setError("An unexpected error occurred. Please try again.");
         } finally {
@@ -31,120 +39,171 @@ export default function AuthComponent({ componentName, onFormSubmit }: AuthCompo
         }
     };
 
-
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="relative flex w-96 flex-col rounded-xl bg-white bg-clip-border text-gray-700 shadow-md"
-        >
-            <div
-                className="relative mx-4 -mt-6 mb-4 grid h-28 place-items-center overflow-hidden rounded-xl bg-gradient-to-tr from-cyan-600 to-cyan-400 bg-clip-border text-white shadow-lg shadow-cyan-500/40"
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Animated background elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }}></div>
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(68,68,68,.05)_25%,rgba(68,68,68,.05)_50%,transparent_50%,transparent_75%,rgba(68,68,68,.05)_75%,rgba(68,68,68,.05))] bg-[length:60px_60px]"></div>
+            </div>
+
+            <form
+                onSubmit={handleSubmit}
+                className="relative w-full max-w-md backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08]"
             >
-                <h3
-                    className="block font-sans text-3xl font-semibold leading-snug tracking-normal text-white antialiased"
-                >
-                    {headerTitle}
-                </h3>
-            </div>
-            <div className="flex flex-col gap-4 p-6">
-                <div className="relative h-11 w-full min-w-[200px]">
-                    <input
-                        placeholder=""
-                        className="peer h-full w-full rounded-md border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-3 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-cyan-500 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
-                    />
-                    <label
-                        className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none text-[11px] font-normal leading-tight text-blue-gray-400 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[4.1] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-cyan-500 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-cyan-500 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-cyan-500 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500"
-                    >
-                        Email
-                    </label>
-                    <input
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="peer h-full w-full rounded-md border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-3 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-cyan-500 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
-                    />
-                    {error && <ErrorMessage message={error} />}
+                {/* Header */}
+                <div className="text-center mb-8 space-y-2">
+                    <h1 className="text-4xl font-bold text-white tracking-tight">
+                        {headerTitle}
+                    </h1>
+                    <p className="text-sm text-slate-400 font-light">
+                        {description}
+                    </p>
                 </div>
-                <div className="relative h-11 w-full min-w-[200px]">
-                    <input
-                        placeholder=""
-                        className="peer h-full w-full rounded-md border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-3 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-cyan-500 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
-                    />
-                    <label
-                        className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none text-[11px] font-normal leading-tight text-blue-gray-400 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[4.1] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-cyan-500 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-cyan-500 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-cyan-500 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500"
-                    >
-                        Password
-                    </label>
-                    {error && <ErrorMessage message={error} />}
-                    <input
-                        type="password"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="peer h-full w-full rounded-md border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-3 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-cyan-500 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
-                    />
-                </div>
-                <div className="-ml-2.5">
-                    <div className="inline-flex items-center">
+
+                {/* Form Fields */}
+                <div className="space-y-5 mb-8">
+                    {/* Email Field */}
+                    <div className="relative group">
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onFocus={() => setFocusedField("email")}
+                            onBlur={() => setFocusedField(null)}
+                            placeholder="you@example.com"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 transition-all duration-200 focus:outline-none focus:border-blue-400/50 focus:bg-white/10 focus:ring-1 focus:ring-blue-400/20"
+                        />
                         <label
-                            data-ripple-dark="true"
-                            htmlFor="checkbox"
-                            className="relative flex cursor-pointer items-center rounded-full p-3"
+                            htmlFor="email"
+                            className={`absolute left-4 transition-all duration-200 pointer-events-none ${email || focusedField === "email"
+                                ? "top-0 -translate-y-2 text-xs font-semibold text-blue-400"
+                                : "top-3.5 text-sm text-slate-400"
+                                }`}
                         >
-                            <input
-                                id="checkbox"
-                                className="before:content[''] peer relative h-5 w-5 cursor-pointer appearance-none rounded-md border border-blue-gray-200 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-blue-gray-500 before:opacity-0 before:transition-opacity checked:border-cyan-500 checked:bg-cyan-500 checked:before:bg-cyan-500 hover:before:opacity-10"
-                                type="checkbox"
-                            />
-                            <span
-                                className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100"
-                            >
-                                <svg
-                                    strokeWidth="1"
-                                    stroke="currentColor"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                    className="h-3.5 w-3.5"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        clipRule="evenodd"
-                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                        fillRule="evenodd"
-                                    ></path>
-                                </svg>
-                            </span>
+                            Email
                         </label>
+                        <div className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-200 ${focusedField === "email" ? "w-full" : "w-0"}`}></div>
                     </div>
+
+                    {/* Password Field */}
+                    <div className="relative group">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onFocus={() => setFocusedField("password")}
+                            onBlur={() => setFocusedField(null)}
+                            placeholder="••••••••"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 transition-all duration-200 focus:outline-none focus:border-blue-400/50 focus:bg-white/10 focus:ring-1 focus:ring-blue-400/20"
+                        />
+                        <label
+                            htmlFor="password"
+                            className={`absolute left-4 transition-all duration-200 pointer-events-none ${password || focusedField === "password"
+                                ? "top-0 -translate-y-2 text-xs font-semibold text-blue-400"
+                                : "top-3.5 text-sm text-slate-400"
+                                }`}
+                        >
+                            Password
+                        </label>
+                        <div className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-200 ${focusedField === "password" ? "w-full" : "w-0"}`}></div>
+                    </div>
+
+                    {/* Secret Code Field (Sign Up Only) */}
+                    {isSignUp && (
+                        <div className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
+                            <input
+                                type="text"
+                                id="secret_code"
+                                name="secret_code"
+                                value={secretCode}
+                                onChange={(e) => setSecretCode(e.target.value)}
+                                onFocus={() => setFocusedField("secret_code")}
+                                onBlur={() => setFocusedField(null)}
+                                placeholder="Enter secret code"
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 transition-all duration-200 focus:outline-none focus:border-blue-400/50 focus:bg-white/10 focus:ring-1 focus:ring-blue-400/20"
+                            />
+                            <label
+                                htmlFor="secret_code"
+                                className={`absolute left-4 transition-all duration-200 pointer-events-none ${secretCode || focusedField === "secret_code"
+                                    ? "top-0 -translate-y-2 text-xs font-semibold text-blue-400"
+                                    : "top-3.5 text-sm text-slate-400"
+                                    }`}
+                            >
+                                Secret Code
+                            </label>
+                            <div className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-200 ${focusedField === "secret_code" ? "w-full" : "w-0"}`}></div>
+                        </div>
+                    )}
                 </div>
-            </div>
-            <div className="p-6 pt-0">
+
+                {/* Error Message */}
+                {error && (
+                    <div className="mb-6 animate-in fade-in slide-in-from-top duration-200">
+                        <ErrorMessage message={error} />
+                    </div>
+                )}
+
+                {/* Remember Me / Terms */}
+                <div className="flex items-center justify-between mb-8 text-xs">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded bg-white/5 border border-white/10 checked:bg-blue-500 checked:border-blue-500 cursor-pointer transition-all duration-200 accent-blue-500"
+                        />
+                        <span className="text-slate-400 group-hover:text-slate-300 transition-colors">
+                            {isSignUp ? "I agree to terms" : "Remember me"}
+                        </span>
+                    </label>
+                    {!isSignUp && (
+                        <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">
+                            Forgot password?
+                        </a>
+                    )}
+                </div>
+
+                {/* Submit Button */}
                 <button
                     disabled={isSubmitting}
-                    data-ripple-light="true"
                     type="submit"
-                    className="block w-full select-none rounded-lg bg-gradient-to-tr from-cyan-600 to-cyan-400 py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-cyan-500/20 transition-all hover:shadow-lg hover:shadow-cyan-500/40 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 active:scale-98 disabled:opacity-50 relative overflow-hidden group"
                 >
-                    {buttonText}
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                        {isSubmitting && (
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        )}
+                        {buttonText}
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
                 </button>
 
-                {
-                    componentName === "sign_up" ? (
-                        <p
-                            className="mt-6 flex justify-center font-sans text-sm font-light leading-normal text-inherit antialiased"
-                        >
-                            Don't have an account?
-                            <a
-                                className="ml-1 block font-sans text-sm font-bold leading-normal text-cyan-500 antialiased"
-                                href="#signup"
-                            >
-                                Sign up
+                {/* Sign Up / Sign In Toggle */}
+                <div className="mt-6 text-center text-sm text-slate-400">
+                    {isSignUp ? (
+                        <>
+                            Already have an account?{" "}
+                            <a href="/admin/auth/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                                Sign in
                             </a>
-                        </p>
-                    ) : null
-                }
-            </div>
-        </form>
+                        </>
+                    ) : (
+                        <>
+                            Don't have an account?{" "}
+                            <a href="/admin/auth/sign_up" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                                Create one
+                            </a>
+                        </>
+                    )}
+                </div>
+            </form>
+        </div>
     );
 }
