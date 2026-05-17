@@ -1,16 +1,40 @@
-'use client'
+"use client"
+
+import { useState } from "react";
+import ErrorMessage from "./error";
 
 interface AuthComponentProps {
     componentName: string;
+    onFormSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }
 
-export default function AuthComponent({ componentName }: AuthComponentProps) {
+export default function AuthComponent({ componentName, onFormSubmit }: AuthComponentProps) {
     const headerTitle = componentName === "sign_up" ? "Sign Up" : "Sign In";
     const description = componentName === "sign_up" ? "Create an account" : "Sign in to your acco   unt";
     const buttonText = componentName === "sign_up" ? "Sign Up" : "Sign In";
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            await onFormSubmit(e);
+        } catch (error) {
+            setError("An unexpected error occurred. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
 
     return (
-        <div
+        <form
+            onSubmit={handleSubmit}
             className="relative flex w-96 flex-col rounded-xl bg-white bg-clip-border text-gray-700 shadow-md"
         >
             <div
@@ -33,6 +57,14 @@ export default function AuthComponent({ componentName }: AuthComponentProps) {
                     >
                         Email
                     </label>
+                    <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="peer h-full w-full rounded-md border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-3 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-cyan-500 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                    />
+                    {error && <ErrorMessage message={error} />}
                 </div>
                 <div className="relative h-11 w-full min-w-[200px]">
                     <input
@@ -44,6 +76,14 @@ export default function AuthComponent({ componentName }: AuthComponentProps) {
                     >
                         Password
                     </label>
+                    {error && <ErrorMessage message={error} />}
+                    <input
+                        type="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="peer h-full w-full rounded-md border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-3 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-cyan-500 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                    />
                 </div>
                 <div className="-ml-2.5">
                     <div className="inline-flex items-center">
@@ -61,7 +101,7 @@ export default function AuthComponent({ componentName }: AuthComponentProps) {
                                 className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100"
                             >
                                 <svg
-                                    stroke-width="1"
+                                    strokeWidth="1"
                                     stroke="currentColor"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
@@ -69,42 +109,42 @@ export default function AuthComponent({ componentName }: AuthComponentProps) {
                                     xmlns="http://www.w3.org/2000/svg"
                                 >
                                     <path
-                                        clip-rule="evenodd"
+                                        clipRule="evenodd"
                                         d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                        fill-rule="evenodd"
+                                        fillRule="evenodd"
                                     ></path>
                                 </svg>
                             </span>
-                        </label>
-                        <label
-                            htmlFor="checkbox"
-                            className="mt-px cursor-pointer select-none font-light text-gray-700"
-                        >
-                            Remember Me
                         </label>
                     </div>
                 </div>
             </div>
             <div className="p-6 pt-0">
                 <button
+                    disabled={isSubmitting}
                     data-ripple-light="true"
-                    type="button"
+                    type="submit"
                     className="block w-full select-none rounded-lg bg-gradient-to-tr from-cyan-600 to-cyan-400 py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-cyan-500/20 transition-all hover:shadow-lg hover:shadow-cyan-500/40 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
                 >
                     {buttonText}
                 </button>
-                <p
-                    className="mt-6 flex justify-center font-sans text-sm font-light leading-normal text-inherit antialiased"
-                >
-                    Don't have an account?
-                    <a
-                        className="ml-1 block font-sans text-sm font-bold leading-normal text-cyan-500 antialiased"
-                        href="#signup"
-                    >
-                        Sign up
-                    </a>
-                </p>
+
+                {
+                    componentName === "sign_up" ? (
+                        <p
+                            className="mt-6 flex justify-center font-sans text-sm font-light leading-normal text-inherit antialiased"
+                        >
+                            Don't have an account?
+                            <a
+                                className="ml-1 block font-sans text-sm font-bold leading-normal text-cyan-500 antialiased"
+                                href="#signup"
+                            >
+                                Sign up
+                            </a>
+                        </p>
+                    ) : null
+                }
             </div>
-        </div>
+        </form>
     );
 }
